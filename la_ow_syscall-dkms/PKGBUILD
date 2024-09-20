@@ -1,6 +1,6 @@
 pkgname=la_ow_syscall-dkms
-pkgver=r23.1b837fd
-pkgrel=2
+pkgver=r24.5c1d04c
+pkgrel=1
 pkgdesc="loongarch old-world syscall module sources"
 arch=(any)
 url="https://github.com/AOSC-Dev/la_ow_syscall"

@@ -1,5 +1,5 @@
 pkgname=liblol
-pkgver=0.1.5
+pkgver=0.1.6+2.40+r16+gaa533d58ff
 pkgrel=1
 pkgdesc="Compatibility layer for running applications designed for Old-World LoongArch systems"
 arch=(loong64)
@@ -7,30 +7,62 @@ url="https://github.com/AOSC-Dev/liblol"
 license=(GPL-2.0-or-later LGPL-2.1-or-later)
 depends=(la_ow_syscall-dkms)
 makedepends=(git gd python)
+_glibc_commit=aa533d58ff12e27771d9c960a727d74992a3f2a3
 # see https://github.com/AOSC-Dev/aosc-os-abbs/blob/stable/runtime-emulation/liblol/
-source=("https://ftp.gnu.org/gnu/glibc/glibc-2.39.tar.xz"
+source=("git+https://sourceware.org/git/glibc.git#commit=${_glibc_commit}"
     "https://github.com/NixOS/patchelf/releases/download/0.18.0/patchelf-0.18.0.tar.gz"
     "https://github.com/besser82/libxcrypt/releases/download/v4.4.36/libxcrypt-4.4.36.tar.xz"
-    "glibc-liblol.patch"
     "0001-add-remap-symvers.patch"
+    "0001-add-old-world-abi-compatibility.patch"
+    "0002-add-sigset-ops.patch"
+    "0003-add-signal-functions.patch"
+    "0004-add-sigaction-ucontext-compat.patch"
+    "0005-add-stubs-for-signal-related-io-funcs.patch"
+    "0006-add-syscall-fallback-for-stat-at.patch"
+    "0007-add-more-pthread-symbols.patch"
+    "0008-remove-clone3-for-compatibility-with-qq.patch"
+    "0009-prepend-trusted-dirs.patch"
+    "0010-Add-___brk_addr-symbol.patch"
+    "0011-siglist-errlist-add-compact-statements.patch"
     "liblol.conf"
     )
-sha256sums=('f77bd47cf8170c57365ae7bf86696c118adb3b120d3259c64c502d3dc1e2d926'
-            '1451d01ee3a21100340aed867d0b799f46f0b1749680028d38c3f5d0128fb8a7'
+sha256sums=('1b94fdaa9df2adb71afcf7c90e28829250065520b974507a2c59850288298f40'
+            '64de10e4c6b8b8379db7e87f58030f336ea747c0515f381132e810dbf84a86e7'
             'e5e1f4caee0a01de2aee26e3138807d6d3ca2b8e67287966d1fefd65e1fd8943'
-            'e0de47803c57b1d56dd35d9669d25d8aba8a5a3d590eb8578f370077f46af09c'
             '39c0bdea63724792e8073b6bcca616099e9edef8d325c203dae99228fcb24504'
+            'f2605389f99271137ae7208c6d863e5853f4f3d595df56f424aeb9f2f2370590'
+            '6298371ecc3e4c26e484db8fc2becd645250ac10ca8a0436b3dcaf740a3ec1f4'
+            '329a6ed334782f1a75be2dc3b18e8f4445e578675529d9f500b2a0aa1774b001'
+            'bbf7e7934cc8429b51c019907c598e7459447a360f92c5e7c6ddffc48522663c'
+            'f8844b7f8f7a2c1f7b73796030a3b84a74f249bc06017aa77efd5216453050a8'
+            'af8fe6cb46bfc65833160259586bb024547945b7c28c9b156d29593ae0d1167e'
+            '12c344e9032794f1414872ae37382df784578c9ecc19ada0393f33e2a8770d81'
+            'd70d3b952f5b43ca32a3ac33ec954dfe5a39fc7875b5e4f87cb43d1d148fe050'
+            '44bf9405c3e5b32291372d268cd9d7dc5539c4dd52451d4804ba2b3a52734c9d'
+            'f8313c1493582388157a480cf004d6d7e2e4ee06536dd31b4731489da646683e'
+            'ad1cf9d0f6d822c37a67358833a4c6872f42b52353baa86e78e92f0f8e1ca25c'
             'f330d80e91d1b7adba14d2a25c8661140dbe2e0d5b1b33ac0c7bc1c29c1e78de')
 install="${pkgname}.install"
 options=(strip !debug)
 
 OWTARGET="loongarch64-aosc-linux-gnuow"
+cflags_common="-O2 -g -ffile-prefix-map=${srcdir}=."
+ldflags_common="-Wl,-O1,--sort-common,--as-needed -Wl,-build-id=sha1"
+libc_map="GLIBC_2.36=GLIBC_2.27,GLIBC_2.28"
 
 prepare() {
   patch -p1 -d patchelf-0.18.0 -i $srcdir/0001-add-remap-symvers.patch
-  patch -p1 -d glibc-2.39 -i $srcdir/glibc-liblol.patch
-
-  ln -s glibc-2.39 glibc
+  patch -p1 -d glibc -i $srcdir/0001-add-old-world-abi-compatibility.patch
+  patch -p1 -d glibc -i $srcdir/0002-add-sigset-ops.patch
+  patch -p1 -d glibc -i $srcdir/0003-add-signal-functions.patch
+  patch -p1 -d glibc -i $srcdir/0004-add-sigaction-ucontext-compat.patch
+  patch -p1 -d glibc -i $srcdir/0005-add-stubs-for-signal-related-io-funcs.patch
+  patch -p1 -d glibc -i $srcdir/0006-add-syscall-fallback-for-stat-at.patch
+  patch -p1 -d glibc -i $srcdir/0007-add-more-pthread-symbols.patch
+  patch -p1 -d glibc -i $srcdir/0008-remove-clone3-for-compatibility-with-qq.patch
+  patch -p1 -d glibc -i $srcdir/0009-prepend-trusted-dirs.patch
+  patch -p1 -d glibc -i $srcdir/0010-Add-___brk_addr-symbol.patch
+  patch -p1 -d glibc -i $srcdir/0011-siglist-errlist-add-compact-statements.patch
   ln -s patchelf-0.18.0 patchelf
   ln -s libxcrypt-4.4.36 libxcrypt
 
@@ -72,7 +104,7 @@ build() {
     cd glibc-build
 
     LOL_PREFIX="/opt/lol"
-    GLIBC_VER="2.39"
+    GLIBC_VER="2.40"
     cflags_common="-O2 -g -ffile-prefix-map=${startdir}=."
     ldflags_common="-Wl,-O1,--sort-common,--as-needed -Wl,-build-id=sha1"
 
